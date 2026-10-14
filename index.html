@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07130f">
+<title>Fútbol Pro 26</title>
+<style>
+/* =========================================================
+   FÚTBOL PRO 26
+   Estructura:
+   1. Estado y configuración
+   2. Datos de clubes y 150 jugadores
+   3. Gestor de pantallas y navegación
+   4. Menú principal y modos de juego
+   5. Carrera, fichajes, Ultimate Team y club
+   6. Alineación y tácticas
+   7. Motor de fútbol en Canvas
+   8. IA, controles, física y reglas
+   9. Estadísticas, resultados y entrenamiento
+   10. Audio, guardado y configuración
+   11. Responsive y controles táctiles
+   ========================================================= */
+:root{--bg:#07130f;--panel:#101f19;--panel2:#192b22;--green:#b9ff43;--green2:#7fd626;--text:#f5f7f4;--muted:#9baaa0;--line:#2a4033;--red:#ff5c65;--gold:#ffc75e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;overflow-x:hidden}
+button,input,select{font:inherit}
+button{cursor:pointer;color:inherit;border:1px solid var(--line);background:var(--panel2);padding:11px 15px;border-radius:10px;transition:background .18s,transform .18s,border-color .18s}
+button:hover{background:#2b4134;border-color:var(--green)}
+button:active{transform:scale(.98)}
+button.primary{background:var(--green);color:#10200a;border-color:var(--green);font-weight:800}
+button.primary:hover{background:#d0ff81}
+button.danger{border-color:#71373b;color:#ff9ba0}
+button:disabled{opacity:.35;cursor:not-allowed}
+input,select{background:#0b1811;border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--text);max-width:100%;width:100%}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(28px,5vw,48px);letter-spacing:-1.5px}
+h2{font-size:24px;letter-spacing:-.5px}
+h3{font-size:16px}
+small,.muted{color:var(--muted)}
+#app{min-height:100vh}
+.topbar{height:65px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--line);background:#091711;position:sticky;top:0;z-index:10}
+.brand{font-size:19px;font-weight:950;letter-spacing:-.7px;cursor:pointer}
+.brand span{color:var(--green)}
+.top-right{display:flex;align-items:center;gap:13px;font-size:13px}
+.money{color:var(--green);font-weight:800}
+.page{max-width:1420px;margin:auto;padding:28px 25px 60px;animation:appear .24s ease}
+@keyframes appear{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pulse{50%{transform:scale(1.07);filter:brightness(1.3)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{from{transform:translateX(15px);opacity:0}to{transform:none;opacity:1}}
+@keyframes flash{50%{opacity:.4}}
+.hero{border:1px solid #334b37;border-radius:22px;padding:clamp(24px,5vw,55px);background:radial-gradient(ellipse at 90% 20%,#324b23 0,transparent 42%),linear-gradient(120deg,#172b1f,#0a1710 70%);min-height:280px;display:flex;align-items:center;justify-content:space-between;gap:20px;overflow:hidden}
+.hero h1{margin-bottom:10px;line-height:1.04}
+.hero p{color:#bdc9bd;max-width:470px;line-height:1.6}
+.hero-art{font-size:clamp(80px,17vw,180px);filter:drop-shadow(0 15px 25px #0008);animation:pulse 3s infinite ease-in-out}
+.eyebrow{color:var(--green);font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:30px 0 15px}
+.section-title h2{margin:0}
+.tile{position:relative;text-align:left;padding:19px;min-height:125px;display:flex;flex-direction:column;gap:9px;background:linear-gradient(145deg,#192a21,#101b15);overflow:hidden}
+.tile .emoji{font-size:28px}
+.tile strong{font-size:15px}
+.tile small{line-height:1.45}
+.tile:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:#b9ff4309;right:-30px;bottom:-40px}
+.tile:hover{transform:translateY(-2px)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;min-width:0}
+.card h3{margin-bottom:13px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:5px 9px;background:#24362a;color:#c8d8cb;font-size:11px;font-weight:750}
+.pill.green{background:#293d1a;color:var(--green)}
+.pill.gold{background:#44351a;color:var(--gold)}
+.statline{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px}
+.statline span:first-child{width:110px;color:var(--muted)}
+.statline strong{width:32px;text-align:right}
+.bar{height:6px;border-radius:9px;background:#26352b;flex:1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);border-radius:9px}
+.back{margin-bottom:20px}
+.club-badge{width:49px;height:49px;display:grid;place-items:center;clip-path:polygon(8% 0,92% 0,100% 75%,50% 100%,0 75%);font-size:24px;flex-shrink:0}
+.teamrow{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #24352b}
+.teamrow:last-child{border:0}
+.teamrow .grow{flex:1;min-width:0}
+.teamrow strong{display:block;font-size:13px}
+.teamrow small{font-size:11px}
+.scroll{max-height:490px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--muted);font-weight:600;background:#14231a;position:sticky;top:0}
+td,th{padding:11px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr.selected{background:#243522}
+table button{padding:6px 8px;font-size:11px}
+.field{position:relative;min-height:310px;border-radius:14px;overflow:hidden;background:repeating-linear-gradient(0deg,#236b3b 0,#236b3b 55px,#267343 55px,#267343 110px);border:2px solid #72ad65}
+.field:before{content:"";position:absolute;inset:5%;border:1px solid #ffffff9c}
+.field:after{content:"";position:absolute;width:24%;height:20%;left:38%;top:5%;border:1px solid #ffffff9c;border-top:0}
+.field .circle{position:absolute;width:105px;height:105px;border:1px solid #ffffff9c;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.field-player{position:absolute;transform:translate(-50%,-50%);text-align:center;cursor:pointer;z-index:2}
+.field-player .dot{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;border:2px solid white;font-size:10px;font-weight:900;box-shadow:0 2px 5px #0008}
+.field-player small{display:block;color:white;font-size:9px;text-shadow:0 1px 3px black}
+.player-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:#142219;display:flex;align-items:center;gap:12px}
+.rating{font-size:24px;font-weight:950;color:var(--green);min-width:37px}
+.player-card .details{flex:1;min-width:0}
+.player-card strong{display:block;font-size:13px}
+.player-card small{font-size:11px}
+.player-card button{padding:7px;font-size:11px}
+#gameScreen{padding:10px;max-width:1500px}
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:12px}
+.pitch-wrap{position:relative;background:#17552d;border-radius:14px;overflow:hidden;border:1px solid #43634b;min-width:0}
+#pitch{display:block;width:100%;aspect-ratio:1.55;touch-action:none}
+.scoreboard{display:flex;justify-content:center;align-items:center;gap:18px;padding:12px;background:#0d1a12;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+.scoreboard strong{font-size:23px}
+.scoreboard .time{color:var(--green);font-weight:900;font-variant-numeric:tabular-nums}
+.game-side{display:flex;flex-direction:column;gap:10px}
+.game-side .card{padding:13px}
+#commentary{min-height:60px;line-height:1.45;font-size:13px;color:#d5e0d6}
+.game-controls{font-size:11px;color:var(--muted);line-height:1.8}
+.game-actions{display:flex;gap:6px;flex-wrap:wrap}
+.game-actions button{flex:1;padding:8px;font-size:11px}
+.touch-controls{display:none;justify-content:space-between;align-items:end;gap:12px;margin-top:10px}
+.pad{width:125px;height:125px;border-radius:50%;position:relative;background:#1a2d20dd;border:1px solid #57705b;touch-action:none;flex-shrink:0}
+.pad-knob{width:43px;height:43px;position:absolute;left:40px;top:40px;background:#b9ff43bb;border-radius:50%;pointer-events:none}
+.touch-actions{display:grid;grid-template-columns:repeat(2,55px);gap:8px}
+.touch-actions button{height:48px;padding:4px;border-radius:50%;font-size:11px;background:#1c3223ed;border-color:#74906c;touch-action:none}
+.touch-actions button:first-child{background:var(--green);color:#10200a}
+.notification{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:100;background:#d1ff91;color:#10200a;font-size:13px;font-weight:800;padding:12px 20px;border-radius:12px;box-shadow:0 8px 35px #0006;animation:slide .2s;max-width:90%;text-align:center}
+.modal-backdrop{position:fixed;inset:0;background:#000b;z-index:50;display:grid;place-items:center;padding:18px}
+.modal{width:min(650px,100%);max-height:90vh;overflow:auto;background:#102017;border:1px solid #3a533f;border-radius:18px;padding:24px;animation:appear .2s}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.progress{height:8px;background:#25372a;border-radius:20px;overflow:hidden}
+.progress div{height:100%;background:var(--green)}
+.splash{position:fixed;inset:0;z-index:1000;background:#07130f;display:grid;place-items:center;text-align:center;transition:opacity .5s}
+.splash-logo{font-size:clamp(36px,8vw,75px);font-weight:1000;letter-spacing:-3px;animation:pulse 1s infinite}
+.splash-logo span{color:var(--green)}
+.splash-ball{font-size:45px;animation:spin 1.8s linear infinite;display:inline-block;margin-bottom:12px}
+#saveStatus{font-size:11px;color:var(--muted)}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.game-layout{grid-template-columns:1fr}.game-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.hero-art{font-size:100px}}
+@media(max-width:560px){.topbar{padding:0 12px;height:58px}.top-right{gap:7px;font-size:11px}.top-right button{padding:7px}.page{padding:19px 13px 45px}.hero{padding:23px;min-height:230px}.hero-art{font-size:70px}.grid,.grid.three{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.tile{padding:13px;min-height:116px}.tile .emoji{font-size:23px}.card{padding:13px}.game-side{grid-template-columns:1fr}.touch-controls{display:flex}.scoreboard{gap:10px;padding:9px}.scoreboard strong{font-size:18px}.formgrid{grid-template-columns:1fr 1fr}.field{min-height:270px}.game-actions button{font-size:10px}.scroll table{font-size:11px}td,th{padding:9px 5px}.brand{font-size:16px}}
+</style>
+</head>
+<body>
+<div id="splash" class="splash">
+ <div><div class="splash-ball">⚽</div><div class="splash-logo">FÚTBOL <span>PRO 26</span></div><p class="muted">EL FÚTBOL ESTÁ EN TUS MANOS</p><div style="width:180px;margin:25px auto" class="progress"><div id="loadingBar" style="width:0%"></div></div><small id="loadingText">Preparando el estadio...</small></div>
+</div>
+<div id="app"></div>
+<div id="notice" style="display:none" class="notification"></div>
+<div id="modalRoot"></div>
+<script>
+"use strict";
+
+/* 1. ESTADO GLOBAL */
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const money=n=>new Intl.NumberFormat("es-EC",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const state={
+ screen:"home",previous:"home",lang:"es",difficulty:"normal",duration:5,
+ volume:.4,sfx:.65,music:false,clubName:"Leones FC",clubColor:"#b9ff43",
+ clubSecond:"#193e29",stadium:"Estadio Aurora",facilities:1,budget:45000000,
+ coins:12000,season:1,week:1,career:false,careerClub:0,
+ selectedHome:0,selectedAway:1,matchType:"amistoso",formation:"4-3-3",
+ playStyle:"posesión",lineup:[],bench:[],match:null,selectedPlayer:0,
+ inventory:[],utLineup:[],auction:[],news:[],achievements:[],
+ stats:{played:0,wins:0,draws:0,losses:0,goals:0},
+ transferOffer:null,trainingScore:0,league:[],schedule:[],tournament:null,
+ matchHistory:[],settings:{autoSwitch:true,showMap:true},saved:false
+};
+const formations={
+ "4-4-2":[[.08,.50],[.23,.18],[.23,.39],[.23,.61],[.23,.82],[.48,.17],[.48,.39],[.48,.61],[.48,.83],[.76,.37],[.76,.63]],
+ "4-3-3":[[.08,.50],[.23,.17],[.23,.39],[.23,.61],[.23,.83],[.47,.28],[.47,.50],[.47,.72],[.75,.18],[.78,.50],[.75,.82]],
+ "3-5-2":[[.08,.50],[.23,.25],[.23,.50],[.23,.75],[.45,.12],[.45,.31],[.46,.50],[.45,.69],[.45,.88],[.75,.35],[.75,.65]],
+ "4-2-3-1":[[.08,.50],[.23,.17],[.23,.39],[.23,.61],[.23,.83],[.39,.37],[.39,.63],[.58,.20],[.60,.50],[.58,.80],[.79,.50]],
+ "5-3-2":[[.08,.50],[.22,.12],[.22,.31],[.22,.50],[.22,.69],[.22,.88],[.47,.30],[.47,.50],[.47,.70],[.76,.35],[.76,.65]]
+};
+
+/* 2. CLUBES FICTICIOS Y BASE DE DATOS DE JUGADORES */
+const clubDefs=[
+ ["Leones FC","#c4ff42","#17462a","Estadio Aurora",82,"🦁"],
+ ["Atlético Boreal","#47b8ff","#10365c","Estadio Boreal",80,"❄️"],
+ ["Real Montaña","#ffcf55","#46331a","Cumbre Arena",78,"⛰️"],
+ ["Deportivo Costa","#35d8ba","#124d46","Costa Park",77,"🌊"],
+ ["Unión Capital","#f2f2f2","#333944","Capital Arena",84,"🏙️"],
+ ["Racing del Sol","#ff804b","#60271d","Sol Stadium",76,"☀️"],
+ ["Fénix Deportivo","#f05a77","#531b31","Fénix Arena",81,"🔥"],
+ ["Tigres del Norte","#ffc640","#3b3214","Norte Coliseo",79,"🐯"],
+ ["Estrella Azul","#6796ff","#182b62","Estrella Park",75,"⭐"],
+ ["Huracán Verde","#65eb8c","#164c2c","Viento Arena",74,"🌪️"],
+ ["Lobos FC","#aab2bf","#303844","Lobos Stadium",78,"🐺"],
+ ["Imperio Sporting","#df9bff","#40235b","Imperio Arena",83,"👑"],
+ ["Aurora United","#ff9eae","#522330","Aurora Park",73,"🌅"],
+ ["Centauros FC","#d9c39a","#41331d","Centauro Stadium",72,"🏇"],
+ ["Volcanes SC","#ff7048","#592319","Volcán Arena",76,"🌋"],
+ ["Cóndores Athletic","#d9e7f0","#243b4b","Cóndor Park",80,"🦅"],
+ ["Dragones Rojos","#ef4b45","#531d1c","Dragón Stadium",77,"🐉"],
+ ["Pumas del Valle","#e5cf68","#40381b","Valle Arena",74,"🐆"]
+];
+const clubs=clubDefs.map((d,i)=>({id:i,name:d[0],color:d[1],second:d[2],stadium:d[3],rating:d[4],icon:d[5],players:[]}));
+const firstNames=["Mateo","Lucas","Santiago","Daniel","Gabriel","Nicolás","Adrián","Thiago","Emiliano","Alejandro","Martín","Julián","Tomás","Samuel","Diego","Benjamín","Andrés","David","Álex","Bruno","Leo","Iker","Damián","Marco","Joaquín","Iván","Gael","Enzo","Simón","Facundo","Rafael","Cristian","Kevin","Esteban","Felipe","Ángel","Pablo","Hugo","Ian","Manuel"];
+const lastNames=["Vega","Mendoza","Castro","Navarro","Cárdenas","Rojas","Morales","Salazar","Paredes","Fuentes","Herrera","Romero","Luna","Silva","Torres","Acosta","Reyes","Vargas","Molina","Ortega","Cabrera","Suárez","Flores","Arias","Medina","Cruz","Santos","Delgado","Benítez","Campos","Viteri","López","Ramírez","Pinto","Guerra","Bravo","Cevallos","Valencia","Paz","Serrano"];
+const nations=[["🇪🇨","Ecuador"],["🇦🇷","Argentina"],["🇧🇷","Brasil"],["🇺🇾","Uruguay"],["🇨🇴","Colombia"],["🇪🇸","España"],["🇫🇷","Francia"],["🇵🇹","Portugal"],["🇩🇪","Alemania"],["🇳🇬","Nigeria"],["🇲🇽","México"],["🇯🇵","Japón"],["🇨🇱","Chile"],["🇮🇹","Italia"],["🇬🇧","Inglaterra"]];
+const positions=["POR","DFC","DFC","LI","LD","MCD","MC","MC","MCO","EI","ED","DC","DC","MC","DFC"];
+const positionNames={POR:"Portero",DFC:"Defensa central",LI:"Lateral izquierdo",LD:"Lateral derecho",MCD:"Pivote",MC:"Mediocentro",MCO:"Mediapunta",EI:"Extremo izquierdo",ED:"Extremo derecho",DC:"Delantero"};
+let playerId=1;
+function createPlayer(clubId,posOverride,quality){
+ const club=clubs[clubId%clubs.length];
+ const pos=posOverride||pick(positions);
+ const base=quality||rand(club.rating-12,club.rating+5);
+ const age=rand(17,35);
+ const potential=clamp(base+(age<22?rand(3,16):rand(-2,5)),45,99);
+ const p={
+  id:playerId++,name:pick(firstNames)+" "+pick(lastNames),age,pos,
+  nation:pick(nations),overall:clamp(base,48,94),potential,
+  pace:clamp(base+rand(-18,13),35,99),
+  shooting:clamp(base+rand(-20,15),25,99),
+  passing:clamp(base+rand(-14,15),30,99),
+  dribbling:clamp(base+rand(-15,15),30,99),
+  defense:clamp(base+rand(-23,15),20,99),
+  physical:clamp(base+rand(-15,14),30,99),
+  goalkeeper:pos==="POR"?clamp(base+rand(-5,12),40,99):rand(5,30),
+  stamina:rand(75,100),goals:0,assists:0,matchRating:6,
+  value:Math.round(Math.pow(Math.max(45,base-36),2)*11000*(age<23?1.3:1)*(age>31?.65:1)),
+  wage:Math.round(base*base*2.1),clubId,number:rand(1,99),injured:false,
+  yellow:0,red:false
+ };
+ return p;
+}
+for(const club of clubs){
+ const roles=["POR","DFC","DFC","LI","LD","MCD","MC","MC","MCO","EI","ED","DC","DC","MC","DFC","DC","EI","MC","POR","LD","MCD","MCO","DFC","DC","MC"];
+ club.players=roles.map((p,i)=>createPlayer(club.id,p,clamp(club.rating+rand(-11,7),52,94)));
+}
+const allPlayers=()=>clubs.flatMap(c=>c.players);
+function findPlayer(id){return allPlayers().find(p=>p.id===Number(id))}
+function makeBadge(c,size=48){return `<div class="club-badge" style="width:${size}px;height:${size}px;background:${c.color};color:${c.second};">${c.icon}</div>`}
+function activeClub(){return clubs[state.careerClub]||clubs[0]}
+function mySquad(){return activeClub().players}
+function getLineup(){
+ const c=clubs[state.selectedHome];
+ if(!state.lineup.length)state.lineup=c.players.slice(0,11).map(p=>p.id);
+ if(!state.bench.length)state.bench=c.players.slice(11,18).map(p=>p.id);
+ return state.lineup.map(findPlayer).filter(Boolean);
+}
+function resetLineup(){
+ const c=clubs[state.selectedHome];
+ state.lineup=c.players.slice(0,11).map(p=>p.id);
+ state.bench=c.players.slice(11,18).map(p=>p.id);
+}
+
+/* 3. IDIOMA Y NAVEGACIÓN */
+const translations={
+ es:{home:"Inicio",career:"Modo Carrera",quick:"Partido rápido",tournament:"Modo Torneo",ultimate:"Ultimate Team",market:"Mercado de fichajes",club:"Mi Club",stats:"Estadísticas",training:"Entrenamiento",settings:"Configuración",credits:"Créditos"},
+ en:{home:"Home",career:"Career Mode",quick:"Quick Match",tournament:"Tournament Mode",ultimate:"Ultimate Team",market:"Transfer Market",club:"My Club",stats:"Statistics",training:"Training",settings:"Settings",credits:"Credits"}
+};
+function T(k){return translations[state.lang]?.[k]||translations.es[k]||k}
+const navItems=[
+ ["career","🏆","Modo Carrera","Construye una dinastía y gana títulos."],
+ ["quick","⚽","Partido rápido","Entra al campo y juega."],
+ ["tournament","🥇","Modo Torneo","Compite por levantar la copa."],
+ ["ultimate","💎","Ultimate Team
